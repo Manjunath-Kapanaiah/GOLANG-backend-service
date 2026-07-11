@@ -1,0 +1,13 @@
+# keep image small by excluding unnecessary files
+.git
+.gitignore
+Dockerfile*
+vendor/
+node_modules/
+*.md
+*.log
+*.tmp
+bin/
+.DS_Store
+.idea
+.vscode
