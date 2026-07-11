@@ -1,0 +1,95 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME    = 'go-backend-service'
+        // .exe for Windows agent — remove .exe if running on Linux agent
+        BINARY_NAME = 'go-backend-service.exe'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo "Checking out ${APP_NAME}..."
+                checkout scm
+            }
+        }
+
+        stage('Setup & Verify') {
+            steps {
+                echo 'Verifying Go installation...'
+                bat 'go version'
+                bat 'go env GOPATH'
+            }
+        }
+
+        stage('Dependencies') {
+            steps {
+                echo 'Downloading and verifying dependencies...'
+                bat 'go mod tidy'
+                bat 'go mod verify'
+            }
+        }
+
+        stage('Quality Gates') {
+            parallel {
+
+                stage('Unit Tests') {
+                    steps {
+                        echo 'Running unit tests with coverage...'
+                        bat 'go test ./... -v -coverprofile=coverage.out'
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'coverage.out', allowEmptyArchive: true
+                        }
+                    }
+                }
+
+                stage('Vet - Static Analysis') {
+                    steps {
+                        echo 'Running go vet (static analysis)...'
+                        bat 'go vet ./...'
+                    }
+                }
+
+                stage('Format Check') {
+                    steps {
+                        echo 'Checking code formatting with gofmt...'
+                        bat 'gofmt -l .'
+                    }
+                }
+
+            }
+        }
+
+        stage('Build Binary') {
+            steps {
+                echo "Building binary: ${BINARY_NAME}..."
+                bat "go build -o ${BINARY_NAME} ."
+                echo 'Binary produced:'
+                bat "dir ${BINARY_NAME}"
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: '*.exe', allowEmptyArchive: true
+                    fingerprint '*.exe'
+                }
+            }
+        }
+
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+        success {
+            echo "SUCCESS: ${APP_NAME} built and all quality gates passed!"
+        }
+        failure {
+            echo 'FAILURE: Check stage logs above for details.'
+        }
+    }
+}
