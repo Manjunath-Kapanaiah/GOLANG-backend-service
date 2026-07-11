@@ -11,27 +11,22 @@
 
 # -------- common args --------
 ARG GO_VERSION=1.20
-ARG APP_NAME=myapp
+ARG APP_NAME=go-backend-service
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 ARG CGO_ENABLED=0
 
 # -------- Linter stage --------
-# Uses the official golangci-lint image to run lint checks.
 FROM golangci/golangci-lint:v1.59.0 AS linter
 WORKDIR /src
-# Copy everything required for linting
 COPY . .
-# Run linter (will fail the build if issues found)
 RUN golangci-lint run ./...
 
 # -------- Test stage --------
 FROM golang:${GO_VERSION} AS test
 WORKDIR /src
-# Copy go.mod/go.sum and download modules first for cache
 COPY go.mod go.sum ./
 RUN go env -w GOPROXY=https://proxy.golang.org,direct && go mod download
-# Copy source and run unit tests
 COPY . .
 RUN go test ./... -v
 
@@ -39,8 +34,7 @@ RUN go test ./... -v
 FROM golang:${GO_VERSION} AS deps
 WORKDIR /src
 COPY go.mod go.sum ./
-RUN go env -w GOPROXY=https://proxy.golang.org,direct \
-    && go mod download
+RUN go env -w GOPROXY=https://proxy.golang.org,direct && go mod download
 
 # -------- Builder stage --------
 FROM golang:${GO_VERSION} AS builder
@@ -59,9 +53,8 @@ RUN CGO_ENABLED=${CGO_ENABLED} GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
 
 # -------- Runtime stage --------
 FROM gcr.io/distroless/static:nonroot AS runtime
-# Copy only the compiled binary and CA certs from the builder stage
-COPY --from=builder /out/myapp /usr/local/bin/myapp
+COPY --from=builder /out/go-backend-service /usr/local/bin/go-backend-service
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 USER nonroot
-EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/myapp"]
+EXPOSE 8081
+ENTRYPOINT ["/usr/local/bin/go-backend-service"]
