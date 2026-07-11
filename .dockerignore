@@ -1,4 +1,3 @@
-# keep image small by excluding unnecessary files
 .git
 .gitignore
 Dockerfile*
