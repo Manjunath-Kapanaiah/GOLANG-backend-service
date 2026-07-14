@@ -1,12 +1,34 @@
+# Git
 .git
 .gitignore
-Dockerfile*
-vendor/
-node_modules/
-*.md
-*.log
-*.tmp
-bin/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# CI
+Jenkinsfile
+.github/
+
+# Binaries
+*.exe
+*.out
+go-backend-service
+
+# Test artifacts
+coverage.out
+*.test
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-.idea
-.vscode
+Thumbs.db
+
+# Docs
+README.md
+*.md
