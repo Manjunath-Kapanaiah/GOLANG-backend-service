@@ -1,3 +1,3 @@
-module github.com/Manjunath-Kapanaiah/go-backend-service
+module github.com/Manjunath-Kapanaiah/GOLANG-backend-service
 
 go 1.21
